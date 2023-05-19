@@ -12,14 +12,14 @@ import java.util.stream.Collectors;
 /**
  * 告警查询规则.
  *
- * 例如：查询设备名为海为测试的告警记录
+ * 例如：查询设备名为test1的告警记录
  * <pre>
  *     {
  *  "terms":[
  *      {
  *          "column":"target_name",
  *          "termType":"alarm-record-term",
- *          "value":"海为测试"
+ *          "value":"test1"
  *      }
  *  ]
  * }
@@ -42,12 +42,12 @@ public class AlarmRecordTerm extends AbstractTermFragmentBuilder {
             sqlFragments.addSql("not");
         }
         sqlFragments
-            .addSql("exists(select 1 from ", getTableName("alarm_record", column), " _bind where _bind.target_name =", columnFullName);
+            .addSql("exists(select 1 from ", getTableName("dev_product", column), " _bind where _bind.id =", columnFullName);
 
         List<Object> ruleId = convertList(column, term);
         sqlFragments
             .addSql(
-                "and _bind.target_name in (",
+                "and _bind.name in (",
                 ruleId.stream().map(r -> "?").collect(Collectors.joining(",")),
                 ")")
             .addParameter(ruleId);

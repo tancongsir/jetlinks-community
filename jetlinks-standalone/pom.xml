@@ -137,6 +137,12 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>work-order-manager</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>rule-engine-manager</artifactId>
             <version>${project.version}</version>
         </dependency>
