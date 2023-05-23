@@ -53,7 +53,7 @@ public class AlarmRecordTerm extends AbstractTermFragmentBuilder {
             sqlFragments.addSql("not");
         }
         sqlFragments
-            .addSql("exists(select 1 from ", getTableName("dev_device_instance", column), " _dev where _dev.id =", columnFullName);
+            .addSql("exists(select 1 from ", getTableName("dev_device_instance", column), " _dev where _dev.product_id =", columnFullName);
 
 
         RDBTableMetadata metadata = column
