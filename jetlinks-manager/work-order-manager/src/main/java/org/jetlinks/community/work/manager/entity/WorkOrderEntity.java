@@ -22,7 +22,7 @@ public class WorkOrderEntity extends GenericEntity<String> {
 
     @Column(length = 64, nullable = false, updatable = false)
     @Schema(description = "工单编号")
-    private String workOrderID;
+    private String workOrderId;
 
     @Column(length = 32)
     @Schema(description = "工单类型")
