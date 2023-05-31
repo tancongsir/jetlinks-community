@@ -52,7 +52,6 @@ public class WorkOrderController implements ReactiveServiceCrudController<WorkOr
     public ReactiveCrudService<WorkOrderEntity, String> getService() {
         return service;
     }
-
     @QueryAction
     @Operation(summary = "工单查询")
     @GetMapping("/word-order/_query")
@@ -86,16 +85,16 @@ public class WorkOrderController implements ReactiveServiceCrudController<WorkOr
 
     @Override
     public void run(String... args) {
-        Flux.interval(Duration.ofMillis(10000)).flatMap(i -> {
-            WorkOrderEntity workOrderEntity = new WorkOrderEntity();
-            workOrderEntity.setType("2");
-            workOrderEntity.setWorkOrderId("2");
-            workOrderEntity.setDescription("2");
-            return add(Mono.just(workOrderEntity))
-                .then(eventBus.publish("/work/add",workOrderEntity));
-        })
-            .onErrorResume(err -> Mono.empty())
-            .subscribe();
+//        Flux.interval(Duration.ofMillis(10000)).flatMap(i -> {
+//            WorkOrderEntity workOrderEntity = new WorkOrderEntity();
+//            workOrderEntity.setType("2");
+//            workOrderEntity.setWorkOrderId("2");
+//            workOrderEntity.setDescription("2");
+//            return add(Mono.just(workOrderEntity))
+//                .then(eventBus.publish("/work/add",workOrderEntity));
+//        })
+//            .onErrorResume(err -> Mono.empty())
+//            .subscribe();
     }
 
 
