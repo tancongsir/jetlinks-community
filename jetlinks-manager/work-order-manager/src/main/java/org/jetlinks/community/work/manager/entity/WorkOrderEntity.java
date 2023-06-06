@@ -22,14 +22,6 @@ import java.util.Date;
 @EnableEntityEvent
 public class WorkOrderEntity extends GenericEntity<String> {
 
-    @Column(length = 64, nullable = false, updatable = false)
-    @Schema(description = "工单编号")
-    private String workOrderId;
-
-    @Column(length = 32)
-    @Schema(description = "工单类型")
-    private String type;
-
     @Column
     @Schema(description = "说明")
     private String description;

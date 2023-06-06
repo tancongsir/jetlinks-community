@@ -22,6 +22,8 @@ import org.hswebframework.web.exception.BusinessException;
 import org.jetlinks.community.io.excel.DefaultImportExportService;
 import org.jetlinks.community.io.excel.ImportExportService;
 import org.jetlinks.community.reference.DataReferenceManager;
+import org.jetlinks.community.work.manager.entity.WorkOrderDetail;
+import org.jetlinks.community.work.manager.entity.WorkOrderDetailJoin;
 import org.jetlinks.community.work.manager.entity.WorkOrderEntity;
 import org.jetlinks.community.work.manager.response.ImportWorkOrderResult;
 import org.jetlinks.community.work.manager.service.WorkOrderService;
@@ -109,6 +111,14 @@ public class WorkOrderController implements ReactiveServiceCrudController<WorkOr
     @PostMapping("/word-order/_add")
     public Mono<WorkOrderEntity> addWordOrder(@RequestBody Mono<WorkOrderEntity> payload) {
         return add(payload);
+    }
+
+    @QueryAction
+    @Operation(summary = "查询工单详情")
+    @GetMapping("/word-order/detail/_query")
+    public Mono<PagerResult<WorkOrderDetailJoin>> queryDetailWordOrder(@Parameter(hidden = true) QueryParamEntity query) {
+//        return service.queryDetailPager(query);
+        return service.joinQueryWorkOrderDetail(query);
     }
 
     @QueryAction
