@@ -245,6 +245,11 @@ public class SceneAction implements Serializable {
                 node.setConfiguration(config.toMap());
                 return;
             }
+            case other: {
+                node.setExecutor(AlarmTaskExecutorProvider.executor);
+                node.setConfiguration(FastBeanCopier.copy(alarm, new HashMap<>()));
+                return;
+            }
         }
 
         throw new UnsupportedOperationException("unsupported executor:" + executor);
@@ -528,7 +533,8 @@ public class SceneAction implements Serializable {
         notify,
         delay,
         device,
-        alarm
+        alarm,
+        other
     }
 
 }

@@ -16,16 +16,16 @@ import org.hswebframework.web.authorization.annotation.Authorize;
 import org.hswebframework.web.authorization.annotation.QueryAction;
 import org.hswebframework.web.authorization.annotation.Resource;
 import org.hswebframework.web.bean.FastBeanCopier;
+import org.hswebframework.web.crud.query.QueryHelper;
 import org.hswebframework.web.crud.service.ReactiveCrudService;
 import org.hswebframework.web.crud.web.reactive.ReactiveServiceCrudController;
 import org.hswebframework.web.exception.BusinessException;
 import org.jetlinks.community.io.excel.DefaultImportExportService;
 import org.jetlinks.community.io.excel.ImportExportService;
 import org.jetlinks.community.reference.DataReferenceManager;
-import org.jetlinks.community.work.manager.entity.WorkOrderDetail;
-import org.jetlinks.community.work.manager.entity.WorkOrderDetailJoin;
-import org.jetlinks.community.work.manager.entity.WorkOrderEntity;
+import org.jetlinks.community.work.manager.entity.*;
 import org.jetlinks.community.work.manager.response.ImportWorkOrderResult;
+import org.jetlinks.community.work.manager.service.WorkOrderRecordService;
 import org.jetlinks.community.work.manager.service.WorkOrderService;
 import org.jetlinks.community.work.manager.web.excel.WorkOrderExcelInfo;
 import org.jetlinks.community.work.manager.web.excel.WorkOrderWrapper;
@@ -49,9 +49,7 @@ import sun.plugin2.gluegen.runtime.BufferFactory;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -68,11 +66,13 @@ public class WorkOrderController implements ReactiveServiceCrudController<WorkOr
 
     private final ReactiveRepository<WorkOrderEntity, String> workOrderEntityStringReactiveRepository;
 
-
+    private final WorkOrderRecordService workOrderRecordService;
 
     private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
 
     private final ImportExportService importExportService;
+
+    private final QueryHelper queryHelper;
 
     @Override
     public ReactiveCrudService<WorkOrderEntity, String> getService() {
@@ -134,9 +134,8 @@ public class WorkOrderController implements ReactiveServiceCrudController<WorkOr
             .headers(WorkOrderExcelInfo.getExportHeaderMapping(Collections.emptyList()))
             .converter(WorkOrderExcelInfo::toMap)
             .writeBuffer(service
-                .query(parameter).map(entity -> {
-                    return FastBeanCopier.copy(entity, new WorkOrderExcelInfo(), "state");
-                }), 512 * 1024)
+                .query(parameter)
+                .map(entity -> FastBeanCopier.copy(entity, new WorkOrderExcelInfo(), "state")), 512 * 1024)
             .doOnError(err -> log.error(err.getMessage(), err))
             .map(bufferFactory::wrap)
             .as(response::writeWith);
@@ -170,6 +169,45 @@ public class WorkOrderController implements ReactiveServiceCrudController<WorkOr
                             .map(ImportWorkOrderResult::success)
                             .onErrorResume(err -> Mono.just(ImportWorkOrderResult.error(err)));
             });
+    }
+    @GetMapping("/word-order/detail/_query/1")
+    @QueryAction
+    public Flux<WorkOrderRecordEntity> find() {
+        return service
+            .createQuery()
+            .fetch()
+            .flatMap(list -> {
+                List<String> ids = new ArrayList<>();
+                ids.add(list.getId());
+                return workOrderRecordService
+                    .createQuery()
+                    .in(WorkOrderRecordEntity::getWorkOrderId,ids)
+                    .fetch();
+            });
+    }
+
+    @GetMapping("/word-order/detail/_query/2")
+    @QueryAction
+    public Mono<PagerResult<WordOrderInfo>> find2(QueryParamEntity query) {
+        return QueryHelper.transformPageResult(
+            service.queryPager(query),
+            list -> QueryHelper
+                .combineOneToMany(
+                    Flux.fromIterable(list).map(e -> e.copyTo(new WordOrderInfo())),
+                    WordOrderInfo::getId,
+                    workOrderRecordService.createQuery(),
+                    WorkOrderRecordEntity::getWorkOrderId,
+                    WordOrderInfo::setList
+                )
+            .collectList());
+    }
+
+    @GetMapping("/word-order/detail/_query/3")
+    @QueryAction
+    public Mono<PagerResult<WordOrderInfo>> find3(QueryParamEntity query) {
+        return queryHelper.select("select t.*,w.work_order_id as workOrderId,w.type as wtype,w.id as wid from work_order t left join work_order_record w on t.id = w.work_order_id", WordOrderInfo::new)
+            .where(query)
+            .fetchPaged();
     }
 
     @Override
