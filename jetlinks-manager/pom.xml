@@ -19,6 +19,7 @@
         <module>logging-manager</module>
         <module>rule-engine-manager</module>
         <module>work-order-manager</module>
+        <module>examine</module>
     </modules>
 
 </project>

@@ -161,7 +161,8 @@ public class DeviceMessageSendTaskExecutorProvider implements TaskExecutorProvid
         //消息来源: pre-node(上游节点),fixed(固定消息)
         private String from;
 
-        private Duration timeout = Duration.ofSeconds(10);
+        //examine-todo 第10题
+        private Duration timeout = Duration.ofSeconds(20);
 
         private Map<String, Object> message;
 
