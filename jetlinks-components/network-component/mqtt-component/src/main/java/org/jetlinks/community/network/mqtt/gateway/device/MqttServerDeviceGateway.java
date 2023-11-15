@@ -28,9 +28,11 @@ import org.springframework.util.StringUtils;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
@@ -130,13 +132,7 @@ class MqttServerDeviceGateway extends AbstractDeviceGateway {
                          .onErrorResume(err -> {
                              log.error(err.getMessage(), err);
                              return Mono.empty();
-                         })
-                         .as(MonoTracer
-                                 .create(SpanName.connection(connection.getClientId()),
-                                         builder -> {
-                                             builder.setAttribute(clientId, connection.getClientId());
-                                             builder.setAttribute(SpanKey.address, connection.getClientAddress().toString());
-                                         })),
+                         }),
                      Integer.MAX_VALUE)
             .subscribe();
 
@@ -187,7 +183,10 @@ class MqttServerDeviceGateway extends AbstractDeviceGateway {
                                 if (!hasValue) {
                                     span.setStatus(StatusCode.ERROR, "device not exists");
                                 }
-                                span.setAttribute(SpanKey.address, connection.getClientAddress().toString());
+                                InetSocketAddress address = connection.getClientAddress();
+                                if (address != null) {
+                                    span.setAttribute(SpanKey.address, address.toString());
+                                }
                                 span.setAttribute(clientId, connection.getClientId());
                             }))
             //设备认证错误,拒绝连接
@@ -289,8 +288,9 @@ class MqttServerDeviceGateway extends AbstractDeviceGateway {
                        MqttConnection::close)
             //网关暂停或者已停止时,则不处理消息
             .filter(pb -> isStarted())
+            .publishOn(Schedulers.parallel())
             //解码收到的mqtt报文
-            .flatMap(publishing -> this
+            .concatMap(publishing -> this
                 .decodeAndHandleMessage(operator, session, publishing, connection)
                 .as(MonoTracer
                         .create(SpanName.upstream(connection.getClientId()),
@@ -318,7 +318,7 @@ class MqttServerDeviceGateway extends AbstractDeviceGateway {
             //解码
             .flatMapMany(codec -> codec.decode(FromDeviceMessageContext.of(session, message, registry)))
             .cast(DeviceMessage.class)
-            .flatMap(msg -> {
+            .concatMap(msg -> {
                 //回填deviceId,有的场景协议包不能或者没有解析出deviceId,则直接使用连接对应的设备id进行填充.
                 if (!StringUtils.hasText(msg.getDeviceId())) {
                     msg.thingId(DeviceThingType.device, operator.getDeviceId());
