@@ -16,6 +16,7 @@ import org.hswebframework.web.authorization.annotation.Resource;
 
 import org.hswebframework.web.authorization.annotation.SaveAction;
 import org.hswebframework.web.id.IDGenerator;
+import org.jetlinks.community.authorize.AuthenticationSpec;
 import org.jetlinks.community.notify.manager.configuration.NotifySubscriberProperties;
 import org.jetlinks.community.notify.manager.entity.NotifySubscriberChannelEntity;
 import org.jetlinks.community.notify.manager.entity.NotifySubscriberProviderEntity;
@@ -210,6 +211,8 @@ public class NotifyChannelController {
 
         private Map<String, Object> configuration;
 
+        private AuthenticationSpec grant;
+
         private NotifyChannelState state;
 
         private List<NotifySubscriberChannelEntity> channels = new ArrayList<>();
@@ -221,11 +224,11 @@ public class NotifyChannelController {
             info.setName(name);
             info.setProvider(provider);
             info.setChannels(
-                channels
-                    .stream()
-                    .filter(e -> e.getId() != null &&
-                        (properties.isAllowAllNotify(auth)))
-                    .collect(Collectors.toList())
+                    channels
+                            .stream()
+                            .filter(e -> e.getId() != null &&
+                                    (properties.isAllowAllNotify(auth) || e.getGrant() == null || e.getGrant().isGranted(auth)))
+                            .collect(Collectors.toList())
             );
             return info;
         }
@@ -235,6 +238,7 @@ public class NotifyChannelController {
                 IDGenerator.RANDOM.generate(),
                 info.getName(),
                 info.getId(),
+                null,
                 null,
                 NotifyChannelState.disabled,
                 new ArrayList<>());
@@ -269,6 +273,7 @@ public class NotifyChannelController {
         public SubscriberProviderInfo with(NotifySubscriberProviderEntity provider) {
             this.id = provider.getId();
             this.name = provider.getName();
+            this.grant = provider.getGrant();
             this.provider = provider.getProvider();
             this.configuration = provider.getConfiguration();
             this.state = provider.getState();
